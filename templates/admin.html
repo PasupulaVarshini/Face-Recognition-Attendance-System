@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>Admin Dashboard</h1>
+        <p>Face Recognition Attendance System Overview</p>
+
+        <div class="dashboard-cards">
+
+            <div class="card">
+                <h3>Total Students</h3>
+                <h2>{{ total_students }}</h2>
+            </div>
+
+            <div class="card">
+                <h3>Total Attendance Records</h3>
+                <h2>{{ total_attendance }}</h2>
+            </div>
+
+            <div class="card">
+                <h3>Today's Present Students</h3>
+                <h2>{{ today_present }}</h2>
+            </div>
+
+            <div class="card">
+                <h3>Today's Attendance Percentage</h3>
+                <h2>{{ attendance_percentage }}%</h2>
+            </div>
+
+        </div>
+
+        <div class="quick-actions">
+            <h2>Quick Actions</h2>
+
+            <a href="/students">Manage Students</a>
+            <a href="/attendance">View Attendance Records</a>
+            <a href="/export-attendance">Download Attendance Report</a>
+            <a href="/">Back to Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

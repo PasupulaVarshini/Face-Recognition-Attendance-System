@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Student | FaceAttend</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="registration-page">
+
+    <div class="registration-header">
+        <h1>Register Student</h1>
+        <p>Add a new student and capture their face.</p>
+        <a href="/">← Back to Dashboard</a>
+
+        {% if message %}
+            <p class="form-note">{{ message }}</p>
+        {% endif %}
+    </div>
+
+    <form id="registration-form" method="POST" action="/register">
+
+        <div class="registration-container">
+
+            <div class="registration-form">
+
+                <h2>Student Details</h2>
+
+                <label for="student_id">Student ID</label>
+                <input
+                    type="text"
+                    id="student_id"
+                    name="student_id"
+                    placeholder="Enter Student ID"
+                    required
+                >
+
+                <label for="student_name">Full Name</label>
+                <input
+                    type="text"
+                    id="student_name"
+                    name="student_name"
+                    placeholder="Enter Full Name"
+                    required
+                >
+
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter Email Address"
+                    required
+                >
+
+                <p class="form-note">
+                    Please complete face capture before proceeding.
+                </p>
+
+            </div>
+
+            <div class="camera-container">
+
+                <h2>Face Capture</h2>
+
+                <video id="video" autoplay playsinline></video>
+
+                <canvas id="canvas" hidden></canvas>
+
+                <img
+                    id="captured-image"
+                    alt="Captured face preview"
+                    hidden
+                >
+
+                <input
+                    type="hidden"
+                    id="face_image"
+                    name="face_image"
+                >
+
+                <div class="camera-buttons">
+
+                    <button type="button" id="start-camera">
+                        Start Camera
+                    </button>
+
+                    <button type="button" id="capture-face">
+                        Capture Face
+                    </button>
+
+                    <button type="button" id="retake-face">
+                        Retake
+                    </button>
+
+                </div>
+
+                <p id="camera-status">
+                    Click Start Camera to begin.
+                </p>
+
+            </div>
+
+        </div>
+
+        <button type="submit" class="action-btn primary">
+            Register Student
+        </button>
+
+    </form>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Attendance System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="dashboard">
+
+        <aside class="sidebar">
+            <h2>FaceAttend</h2>
+
+            <nav>
+                <a href="/" class="active">Dashboard</a>
+                <a href="/mark-attendance-page">Mark Attendance</a>
+                <a href="/register">Register Student</a>
+                <a href="/attendance">Attendance Records</a>
+                <a href="/students">Students</a>
+                <a href="/admin">Admin Dashboard</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>Face Recognition System</p>
+                <span>Attendance Management</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+                <div>
+                    <h1>Dashboard</h1>
+                    <p>Welcome to your attendance management system.</p>
+                </div>
+
+                <div class="admin-profile">
+                    <span>Admin</span>
+                    <div class="profile-icon">A</div>
+                </div>
+            </header>
+
+            <section class="stats-container">
+
+                <div class="stat-card">
+                    <div class="stat-icon blue">👨‍🎓</div>
+                    <h3>Total Students</h3>
+                    <h2>{{ total_students }}</h2>
+                    <p>Registered students</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon green">✓</div>
+                    <h3>Present Today</h3>
+                    <h2>{{ today_present }}</h2>
+                    <p>Students present</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon red">✕</div>
+                    <h3>Absent Today</h3>
+                    <h2>{{ absent_today }}</h2>
+                    <p>Students absent</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon purple">📊</div>
+                    <h3>Attendance Rate</h3>
+                    <h2>{{ attendance_rate }}%</h2>
+                    <p>Today's attendance</p>
+                </div>
+
+            </section>
+
+            <section class="actions-section">
+                <h2>Quick Actions</h2>
+
+                <div class="actions-container">
+
+                    <a href="/mark-attendance-page" class="action-btn primary">
+                        📷 Mark Your Attendance
+                    </a>
+
+                    <a href="/register" class="action-btn secondary">
+                        + Register Student
+                    </a>
+
+                    <a href="/attendance" class="action-btn secondary">
+                        📋 View Records
+                    </a>
+
+                    <a href="/students" class="action-btn secondary">
+                        👨‍🎓 Manage Students
+                    </a>
+
+                </div>
+            </section>
+
+            <section class="attendance-section">
+
+                <div class="section-header">
+                    <div>
+                        <h2>Recent Attendance</h2>
+                        <p>Latest attendance records</p>
+                    </div>
+
+                    <a href="/attendance" class="view-btn">View All</a>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Student Name</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for record in recent_records %}
+                            <tr>
+                                <td>{{ record.student_id }}</td>
+                                <td>{{ record.name }}</td>
+                                <td>{{ record.attendance_date }}</td>
+                                <td>{{ record.attendance_time }}</td>
+                                <td>{{ record.status }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="empty-message">
+                                    No attendance records available yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+            <footer>
+                <p>© 2026 FaceAttend | Face Recognition Attendance System</p>
+            </footer>
+
+        </main>
+
+    </div>
+
+</body>
+</html>

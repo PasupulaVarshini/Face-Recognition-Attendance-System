@@ -1,0 +1,344 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .camera-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 20px auto;
+            background: #111;
+            overflow: hidden;
+        }
+
+        #video {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #message {
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Mark Your Attendance</h1>
+    <p>Enter your Student ID and show your face to the camera.</p>
+
+    <label for="student_id">Student ID</label>
+    <input type="text" id="student_id" placeholder="Enter Student ID">
+
+    <h2>Live Camera Recognition</h2>
+
+    <div class="camera-wrapper">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="overlay"></canvas>
+    </div>
+
+    <canvas id="captureCanvas" hidden></canvas>
+
+    <div>
+        <button id="startCamera">Start Camera</button>
+        <button id="captureFace" disabled>Mark Attendance</button>
+    </div>
+
+    <p id="message">Please start the camera.</p>
+
+    <a href="/">Back to Dashboard</a>
+
+</div>
+
+<script>
+const video = document.getElementById("video");
+const overlay = document.getElementById("overlay");
+const captureCanvas = document.getElementById("captureCanvas");
+const studentInput = document.getElementById("student_id");
+const message = document.getElementById("message");
+const startButton = document.getElementById("startCamera");
+const captureButton = document.getElementById("captureFace");
+
+const overlayContext = overlay.getContext("2d");
+const captureContext = captureCanvas.getContext("2d");
+
+let cameraStream = null;
+let recognitionTimer = null;
+let recognitionInProgress = false;
+let recognizedStudentId = null;
+let recognizedStudentName = null;
+
+function stopRecognition() {
+    if (recognitionTimer !== null) {
+        clearInterval(recognitionTimer);
+        recognitionTimer = null;
+    }
+
+    recognitionInProgress = false;
+}
+
+function stopCamera() {
+    stopRecognition();
+
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+
+    video.srcObject = null;
+    overlayContext.clearRect(0, 0, overlay.width, overlay.height);
+    recognizedStudentId = null;
+    recognizedStudentName = null;
+    captureButton.disabled = true;
+}
+
+function updateAttendanceButton() {
+    const enteredId = studentInput.value.trim();
+
+    captureButton.disabled = !(
+        cameraStream &&
+        recognizedStudentId &&
+        enteredId === recognizedStudentId
+    );
+}
+
+studentInput.addEventListener("input", updateAttendanceButton);
+
+function drawFaceBox(box, name, recognized) {
+    const [x, y, w, h] = box;
+
+    overlayContext.clearRect(0, 0, overlay.width, overlay.height);
+
+    const color = recognized ? "#00ff66" : "#ff3333";
+
+    overlayContext.strokeStyle = color;
+    overlayContext.lineWidth = 4;
+    overlayContext.strokeRect(x, y, w, h);
+
+    overlayContext.font = "bold 22px Arial";
+
+    const textWidth = overlayContext.measureText(name).width;
+
+    overlayContext.fillStyle = color;
+    overlayContext.fillRect(x, Math.max(0, y - 35), textWidth + 20, 35);
+
+    overlayContext.fillStyle = "#ffffff";
+    overlayContext.fillText(name, x + 10, Math.max(25, y - 10));
+}
+
+async function recognizeFace() {
+    if (
+        !cameraStream ||
+        video.videoWidth === 0 ||
+        recognitionInProgress
+    ) {
+        return;
+    }
+
+    recognitionInProgress = true;
+
+    try {
+        captureCanvas.width = video.videoWidth;
+        captureCanvas.height = video.videoHeight;
+
+        overlay.width = video.videoWidth;
+        overlay.height = video.videoHeight;
+
+        captureContext.drawImage(
+            video,
+            0,
+            0,
+            captureCanvas.width,
+            captureCanvas.height
+        );
+
+        const faceImage = captureCanvas.toDataURL("image/jpeg", 0.75);
+
+        const response = await fetch("/api/recognize-face", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                face_image: faceImage
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || "Recognition failed.");
+        }
+
+        if (result.recognized && result.box) {
+            recognizedStudentId = result.student_id;
+            recognizedStudentName = result.name;
+
+            drawFaceBox(
+                result.box,
+                result.name,
+                true
+            );
+
+            if (studentInput.value.trim() === recognizedStudentId) {
+                message.textContent =
+                    "Recognized: " + recognizedStudentName +
+                    ". You can mark your attendance.";
+            } else {
+                message.textContent =
+                    "Recognized: " + recognizedStudentName +
+                    ". Please enter the correct Student ID.";
+            }
+
+        } else {
+            recognizedStudentId = null;
+            recognizedStudentName = null;
+
+            if (result.box) {
+                drawFaceBox(result.box, "Unknown", false);
+            } else {
+                overlayContext.clearRect(
+                    0, 0, overlay.width, overlay.height
+                );
+            }
+
+            message.textContent = result.message || "Face not recognized.";
+        }
+
+        updateAttendanceButton();
+
+    } catch (error) {
+        message.textContent = "Recognition error: " + error.message;
+        recognizedStudentId = null;
+        recognizedStudentName = null;
+        updateAttendanceButton();
+
+    } finally {
+        recognitionInProgress = false;
+    }
+}
+
+startButton.addEventListener("click", async () => {
+    try {
+        stopCamera();
+
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: "user"
+            },
+            audio: false
+        });
+
+        video.srcObject = cameraStream;
+
+        await video.play();
+
+        startButton.disabled = true;
+
+        message.textContent = "Camera started. Looking for your face...";
+
+        recognizeFace();
+
+        recognitionTimer = setInterval(recognizeFace, 1000);
+
+    } catch (error) {
+        stopCamera();
+        startButton.disabled = false;
+
+        message.textContent =
+            "Unable to access camera. Please allow camera permission.";
+    }
+});
+
+captureButton.addEventListener("click", async () => {
+    const studentId = studentInput.value.trim();
+
+    if (!studentId) {
+        message.textContent = "Please enter your Student ID.";
+        return;
+    }
+
+    if (!recognizedStudentId || studentId !== recognizedStudentId) {
+        message.textContent = "Student ID does not match the recognized face.";
+        return;
+    }
+
+    if (!cameraStream || video.videoWidth === 0) {
+        message.textContent = "Please start the camera first.";
+        return;
+    }
+
+    captureCanvas.width = video.videoWidth;
+    captureCanvas.height = video.videoHeight;
+
+    captureContext.drawImage(
+        video,
+        0,
+        0,
+        captureCanvas.width,
+        captureCanvas.height
+    );
+
+    const faceImage = captureCanvas.toDataURL("image/jpeg", 0.9);
+
+    captureButton.disabled = true;
+    message.textContent = "Verifying and marking attendance...";
+
+    try {
+        const response = await fetch("/api/mark-attendance", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                student_id: studentId,
+                face_image: faceImage
+            })
+        });
+
+        const result = await response.json();
+
+        message.textContent = result.message;
+
+        if (result.success) {
+            stopCamera();
+            startButton.disabled = true;
+        } else {
+            updateAttendanceButton();
+        }
+
+    } catch (error) {
+        message.textContent =
+            "Unable to connect to the server. Please try again.";
+
+        updateAttendanceButton();
+    }
+});
+</script>
+
+</body>
+</html>
