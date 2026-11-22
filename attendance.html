@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Records</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Attendance Records</h1>
+        <p>View all recorded student attendance details.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Student Name</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            
+<tbody>
+    {% for record in records %}
+    <tr>
+        <td>{{ record.student_id }}</td>
+        <td>{{ record.name }}</td>
+        <td>{{ record.attendance_date }}</td>
+        <td>{{ record.attendance_time }}</td>
+        <td>{{ record.status }}</td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="5" class="empty-message">
+            No attendance records available yet.
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+        </table>
+
+        <br>
+        <a href="/">Back to Dashboard</a>
+    </div>
+
+</body>
+</html>
